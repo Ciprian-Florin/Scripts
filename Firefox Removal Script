@@ -1,0 +1,37 @@
+# Possible locations of the uninstall key
+$uninstallKeyPaths = @(
+    "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall",
+    "HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+)
+
+$firefoxInfo = $null
+
+foreach ($path in $uninstallKeyPaths) {
+    $firefoxInfo = Get-ChildItem $path |
+        Where-Object {
+            ($_ | Get-ItemProperty).DisplayName -like "Mozilla Firefox*"
+        } |
+        ForEach-Object {
+            $_ | Get-ItemProperty
+        } |
+        Select-Object -First 1
+
+    if ($firefoxInfo) { break }
+}
+
+if ($firefoxInfo) {
+    $version = [version]$firefoxInfo.DisplayVersion
+    Write-Output "Installed Firefox version: $version"
+
+    if ($version -le [version]"127.0") {
+        Write-Output "Version is $version, which is less than or equal to 127.0. Firefox will be uninstalled..."
+        
+        # Run the uninstaller silently
+        Start-Process -FilePath $firefoxInfo.UninstallString -ArgumentList "/S" -Wait
+        Write-Output "Firefox has been uninstalled."
+    } else {
+        Write-Output "Version is greater than 127.0. Firefox will remain installed."
+    }
+} else {
+    Write-Output "Firefox is not installed on this system."
+}
