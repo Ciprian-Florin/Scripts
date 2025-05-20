@@ -1,0 +1,26 @@
+# Set variables
+$guestUser = "Guest"
+$adminGroup = "Administrators"
+
+# Check if the Guest user is a member of the Administrators group
+if (Get-LocalGroupMember -Group $adminGroup -ErrorAction SilentlyContinue | Where-Object { $_.Name -match $guestUser }) {
+    Write-Output "The Guest user is a member of the Administrators group. Removing..."
+
+    # Remove the user from the group
+    try {
+        Remove-LocalGroupMember -Group $adminGroup -Member $guestUser -ErrorAction Stop
+        Write-Output "Guest has been removed from the Administrators group."
+    } catch {
+        Write-Error "Error while removing the Guest user from the group: $_"
+    }
+} else {
+    Write-Output "The Guest user is not a member of the Administrators group."
+}
+
+# Disable the Guest account
+try {
+    Disable-LocalUser -Name $guestUser -ErrorAction Stop
+    Write-Output "The Guest account has been disabled."
+} catch {
+    Write-Error "Error while disabling the Guest account: $_"
+}
