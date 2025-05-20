@@ -1,0 +1,38 @@
+# Minimum acceptable version – anything <= 2.2.1 will be considered vulnerable
+$maxVulnerableVersion = [version]"2.2.1"
+
+# Possible locations for uninstallation
+$uninstallKeyPaths = @(
+    "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall",
+    "HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+)
+
+$wiresharkInfo = $null
+
+foreach ($path in $uninstallKeyPaths) {
+    $wiresharkInfo = Get-ChildItem $path |
+        Where-Object {
+            ($_ | Get-ItemProperty).DisplayName -like "Wireshark*" 
+        } |
+        ForEach-Object {
+            $_ | Get-ItemProperty
+        } |
+        Select-Object -First 1
+
+    if ($wiresharkInfo) { break }
+}
+
+if ($wiresharkInfo) {
+    $installedVersion = [version]$wiresharkInfo.DisplayVersion
+    Write-Output "Wireshark is installed. Version: $installedVersion"
+
+    if ($installedVersion -le $maxVulnerableVersion) {
+        Write-Output "Version is $installedVersion, which is vulnerable (≤ 2.2.1). Proceeding with uninstallation..."
+        Start-Process -FilePath $wiresharkInfo.UninstallString -ArgumentList "/S" -Wait
+        Write-Output "Wireshark has been uninstalled."
+    } else {
+        Write-Output "Version is higher than 2.2.1. No action taken."
+    }
+} else {
+    Write-Output "Wireshark is not installed on this system."
+}
