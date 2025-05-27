@@ -23,23 +23,16 @@
     Put any usage instructions here.
     PS C:\> .\__remediation_template(STIG-ID-WN10-AU-000500).ps1 
 #>
-# Dimensiunea minimă dorită (în kilobyți)
-$minLogSizeKB = 32768
-$logName = "Application"
+# Setarea căii de registry
+$basePath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Application"
 
-# Obține dimensiunea actuală folosind wevtutil
-$currentLogInfo = wevtutil gl $logName
-
-# Extrage dimensiunea curentă din ieșirea comenzii
-$currentSizeLine = $currentLogInfo | Where-Object { $_ -match "^maximumSize:" }
-$currentSizeBytes = [int]($currentSizeLine -replace "maximumSize:\s+", "")
-$currentSizeKB = [math]::Round($currentSizeBytes / 1024)
-
-# Compară și actualizează dacă e nevoie
-if ($currentSizeKB -lt $minLogSizeKB) {
-    Write-Output "Dimensiunea curentă: $currentSizeKB KB. Se face update la $minLogSizeKB KB..."
-    wevtutil sl $logName /ms:($minLogSizeKB * 1024)
-    Write-Output "Dimensiunea a fost actualizată cu succes."
-} else {
-    Write-Output "Dimensiunea actuală ($currentSizeKB KB) este suficientă. Nu se face nicio modificare."
+# Verifică dacă subcheia există, dacă nu - o creează
+if (-not (Test-Path $basePath)) {
+    New-Item -Path $basePath -Force | Out-Null
 }
+
+# Setează valoarea MaxSize la 0x8000 (32.768 în zecimal)
+Set-ItemProperty -Path $basePath -Name "MaxSize" -Value 0x8000 -Type DWord
+
+Write-Host "Valoarea MaxSize a fost setată la $basePath"
+
