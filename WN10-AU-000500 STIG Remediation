@@ -23,31 +23,23 @@
     Put any usage instructions here.
     PS C:\> .\__remediation_template(STIG-ID-WN10-AU-000500).ps1 
 #>
-
-# Define the minimum required size for the Application event log in kilobytes (32,768 KB = 32 MB)
+# Dimensiunea minimă dorită (în kilobyți)
 $minLogSizeKB = 32768
-
-# Define the name of the event log to check and update
 $logName = "Application"
 
-# Retrieve the current settings for the specified event log
-$logSettings = Get-EventLog -LogName $logName
+# Obține dimensiunea actuală folosind wevtutil
+$currentLogInfo = wevtutil gl $logName
 
-# Extract the current maximum size of the event log in KB
-$currentSizeKB = $logSettings.MaximumKilobytes
+# Extrage dimensiunea curentă din ieșirea comenzii
+$currentSizeLine = $currentLogInfo | Where-Object { $_ -match "^maximumSize:" }
+$currentSizeBytes = [int]($currentSizeLine -replace "maximumSize:\s+", "")
+$currentSizeKB = [math]::Round($currentSizeBytes / 1024)
 
-# Compare the current size with the required minimum size
+# Compară și actualizează dacă e nevoie
 if ($currentSizeKB -lt $minLogSizeKB) {
-    # If the current size is smaller than required, log the change and update the log size
-    Write-Output "Current size: $currentSizeKB KB. Updating to $minLogSizeKB KB."
-
-    # Use wevtutil to set the maximum size of the Application event log
-    # wevtutil expects size in bytes, so multiply KB by 1024
-    wevtutil sl $logName /ms:$($minLogSizeKB * 1024)
-
-    # Confirm the update was made
-    Write-Output "Application event log size updated successfully."
+    Write-Output "Dimensiunea curentă: $currentSizeKB KB. Se face update la $minLogSizeKB KB..."
+    wevtutil sl $logName /ms:($minLogSizeKB * 1024)
+    Write-Output "Dimensiunea a fost actualizată cu succes."
 } else {
-    # If the current size is already compliant, no action is needed
-    Write-Output "Current size ($currentSizeKB KB) meets the minimum requirement. No changes made."
+    Write-Output "Dimensiunea actuală ($currentSizeKB KB) este suficientă. Nu se face nicio modificare."
 }
