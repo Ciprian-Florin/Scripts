@@ -1,0 +1,53 @@
+<#
+.SYNOPSIS
+    This PowerShell script ensures that the maximum size of the Windows Application event log is at least 32768 KB (32 MB).
+
+.NOTES
+    Author          : Ciprian Ghiur
+    LinkedIn        : https://www.linkedin.com/in/ciprian-ghiur-440777139/
+    GitHub          : github.com/joshmadakor1
+    Date Created    : 27-05-2025
+    Last Modified   : 27-05-2025
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN10-AU-000500
+
+.TESTED ON
+    Date(s) Tested  :  27-05-2025
+    Tested By       : 
+    Systems Tested  : 
+    PowerShell Ver. : 
+
+.USAGE
+    Put any usage instructions here.
+    PS C:\> .\__remediation_template(STIG-ID-WN10-AU-000500).ps1 
+#>
+
+# Define the minimum required size for the Application event log in kilobytes (32,768 KB = 32 MB)
+$minLogSizeKB = 32768
+
+# Define the name of the event log to check and update
+$logName = "Application"
+
+# Retrieve the current settings for the specified event log
+$logSettings = Get-EventLog -LogName $logName
+
+# Extract the current maximum size of the event log in KB
+$currentSizeKB = $logSettings.MaximumKilobytes
+
+# Compare the current size with the required minimum size
+if ($currentSizeKB -lt $minLogSizeKB) {
+    # If the current size is smaller than required, log the change and update the log size
+    Write-Output "Current size: $currentSizeKB KB. Updating to $minLogSizeKB KB."
+
+    # Use wevtutil to set the maximum size of the Application event log
+    # wevtutil expects size in bytes, so multiply KB by 1024
+    wevtutil sl $logName /ms:$($minLogSizeKB * 1024)
+
+    # Confirm the update was made
+    Write-Output "Application event log size updated successfully."
+} else {
+    # If the current size is already compliant, no action is needed
+    Write-Output "Current size ($currentSizeKB KB) meets the minimum requirement. No changes made."
+}
