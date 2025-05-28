@@ -1,0 +1,32 @@
+Title: Account Lockout Duration Configuration
+
+Description:
+The account lockout feature, when enabled, mitigates brute-force password attacks by locking an account after a defined number of failed logon attempts. The "Account lockout duration" parameter determines the length of time that an account remains locked before it is automatically unlocked.
+
+Setting this value to "0", which requires an administrator to manually unlock the account, is considered more restrictive and is not considered a finding.
+Fix:
+
+Configure the following policy:
+Computer Configuration >> Windows Settings >> Security Settings >> Account Policies >> Account Lockout Policy >> "Account lockout duration" to "15" minutes or greater.
+Manual Remediation Steps:
+
+    Open the Group Policy Editor by running gpedit.msc.
+
+    Navigate to:
+    Local Computer Policy >> Computer Configuration >> Windows Settings >> Security Settings >> Account Policies >> Account Lockout Policy.
+
+    Check the current value of "Account lockout duration":
+
+        If the value is less than 15 minutes (excluding "0"), it does not meet compliance.
+
+        The setting was initially 10 minutes, and was manually changed to 16 minutes.
+
+    The system was rescanned, and the compliance check passed.
+
+    The value was then reverted to 10 minutes in preparation for remediation via PowerShell.
+
+PowerShell Remediation:
+
+To set the Account lockout duration to 16 minutes using PowerShell, the following command was used:
+
+net accounts /lockoutduration:16
