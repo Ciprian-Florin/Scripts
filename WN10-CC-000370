@@ -1,0 +1,39 @@
+Disabling Convenience PIN for Windows 10 – WN10-CC-000370
+
+To comply with security policy WN10-CC-000370, the Convenience PIN sign-in feature in Windows 10 must be disabled. This policy controls whether domain users are allowed to sign in using a convenience PIN, which helps prevent potential misuse such as password stuffing attacks.
+Configuration Verification:
+
+    Navigated to:
+    Computer Configuration > Administrative Templates > System > Logon
+
+    Policy: Turn on convenience PIN sign-in
+
+    Status: Initially Not Configured → Changed to Disabled
+
+After setting the policy to Disabled, the virtual machine (VM) was rescanned.
+  Result: The Windows compliance check passed.
+
+To confirm the impact, the setting was reverted back to Not Configured, and the VM was rescanned.
+  Result: The Windows compliance check failed.
+Registry Validation:
+
+    Hive: HKEY_LOCAL_MACHINE
+
+    Path: Software\Policies\Microsoft\Windows\System
+
+    Observation: The value AllowDomainPINLogon was not present under the System key.
+
+To enforce compliance, the following PowerShell script was used to explicitly disable PIN sign-in via the registry:
+
+# Definește calea în registry
+$regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System"
+
+# Creează cheia dacă nu există
+if (-not (Test-Path $regPath)) {
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+# Setează valoarea pentru a dezactiva autentificarea PIN
+New-ItemProperty -Path $regPath -Name "AllowDomainPINLogon" -Value 0 -PropertyType DWORD -Force
+
+Write-Host "Convenience PIN sign-in a fost dezactivat cu succes."
