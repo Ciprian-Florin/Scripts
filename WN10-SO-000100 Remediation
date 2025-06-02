@@ -1,0 +1,47 @@
+WN10-SO-000100 – Enforce SMB Packet Signing for Windows SMB Client
+
+Description:
+The Server Message Block (SMB) protocol underpins many Windows-based network operations. Enabling SMB packet signing ensures communication integrity and mitigates the risk of man-in-the-middle (MITM) attacks.
+This control mandates that the SMB client only communicates with SMB servers that support packet signing.
+
+Compliance Check:
+
+    Registry Hive: HKEY_LOCAL_MACHINE
+
+    Registry Path: \SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters
+
+    Registry Value: RequireSecuritySignature
+
+    Type: REG_DWORD
+
+    Expected Value: 1
+
+Initial Status:
+
+    The registry value was initially set to 0.
+
+    After changing it to 1 and restarting the VM, the system passed the compliance audit.
+
+    The value was reset to 0 to allow automation of the remediation process.
+
+Remediation Script (PowerShell):
+# Define registry path and property
+$regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters"
+$propertyName = "RequireSecuritySignature"
+$desiredValue = 1
+
+# Create the registry key if it doesn't exist
+If (-not (Test-Path $regPath)) {
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+# Set the required value
+Set-ItemProperty -Path $regPath -Name $propertyName -Value $desiredValue -Type DWord
+
+# Verify and confirm the change
+$currentValue = Get-ItemProperty -Path $regPath -Name $propertyName
+if ($currentValue.$propertyName -eq $desiredValue) {
+    Write-Host "✔ SMB client is configured to require packet signing." -ForegroundColor Green
+} else {
+    Write-Host "✖ Failed to configure SMB client packet signing requirement." -ForegroundColor Red
+}
