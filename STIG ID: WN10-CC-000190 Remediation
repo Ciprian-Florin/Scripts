@@ -1,0 +1,23 @@
+# Remediation for STIG ID: WN10-CC-000190
+# Requirement: Disable Autoplay for all drives
+
+try {
+    Write-Host "Applying STIG WN10-CC-000190 remediation..."
+
+    # Set registry key to disable AutoPlay on all drives
+    New-Item -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
+    Set-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" `
+        -Name "NoDriveTypeAutoRun" -Value 255 -Type DWord
+
+    Write-Host "Autoplay has been disabled for all drives."
+}
+catch {
+    Write-Error "Failed to apply STIG WN10-CC-000190 remediation: $_"
+}
+
+Explanation:
+    Registry Path: HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer
+    Registry Value: NoDriveTypeAutoRun
+    Value Set: 255 disables AutoPlay on all types of drives, including unknown, removable, network, CD-ROM, RAM disks, and fixed drives.
+
+
