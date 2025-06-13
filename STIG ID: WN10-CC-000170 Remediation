@@ -1,0 +1,47 @@
+Overview
+
+To ensure enterprise control over credentials and application access, the policy setting that allows Microsoft accounts to be optional for modern style apps must be enabled.
+This setting ensures that enterprise credentials can be used in supported apps, eliminating the requirement for Microsoft accounts.
+  Note: This control is Not Applicable (NA) for Windows 10 LTSC or B versions, as these editions do not support the Microsoft Store or modern applications.
+
+  Assessment Details
+    Registry Hive: HKEY_LOCAL_MACHINE
+    Registry Path: SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\
+    Value Name: MSAOptional
+    Value Type: REG_DWORD
+    Expected Value: 0x00000001 (1)
+
+    Status:
+        The MSAOptional registry key was not present initially.
+        The policy was configured using Group Policy:
+        Computer Configuration → Administrative Templates → Windows Components → App Runtime →
+        "Allow Microsoft accounts to be optional" → set to "Enabled"
+
+        A rescan was performed and the system passed.
+
+        The policy was then disabled again, and the system was rescanned.
+
+  Remediation Script Used
+    Note: The following script addresses the related control for disabling Remote Shell Access, which is also part of the broader hardening strategy:
+
+# Script for WN10-CC-000170 - Enable "Microsoft Accounts Optional" for Modern Apps
+
+$regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+$valueName = "MSAOptional"
+$desiredValue = 1
+
+# Check if the registry key exists; if not, create it
+if (-not (Test-Path $regPath)) {
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+# Set the registry value to enable Microsoft Accounts to be optional
+New-ItemProperty -Path $regPath -Name $valueName -PropertyType DWord -Value $desiredValue -Force
+
+Write-Output "'MSAOptional' has been set to $desiredValue (Microsoft accounts optional for modern apps)"
+
+
+Compliance Result
+    The system was updated according to STIG requirements.
+    Registry values and Group Policy settings were properly applied.
+    Final scan indicated compliance.
