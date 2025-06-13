@@ -1,0 +1,38 @@
+STIG ID: WN10-CC-000335
+Title: The Windows Remote Management (WinRM) client must not allow unencrypted traffic.
+
+Rationale:
+Unencrypted remote access to a system can result in the exposure of sensitive information. To mitigate this risk, Windows Remote Management (WinRM) connections must be encrypted.
+
+Assessment Details:
+    Registry Hive: HKEY_LOCAL_MACHINE
+    Registry Path: \SOFTWARE\Policies\Microsoft\Windows\WinRM\Client
+    Observation: The Client key was not present at the specified path.
+
+Remediation Actions:
+
+    Initial Manual Remediation:
+        Navigated to:
+        Computer Configuration >> Administrative Templates >> Windows Components >> Windows Remote Management (WinRM) >> WinRM Client
+        Configured the policy "Allow unencrypted traffic" to "Disabled"
+        Performed a compliance rescan → Result: Passed
+        Reverted the setting back to "Not Configured" to apply a persistent solution via script.
+
+    Script-Based Remediation:
+    The following PowerShell script was applied to enforce the required setting:
+# Script to remediate WN10-CC-000335
+
+$regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client"
+$valueName = "AllowUnencryptedTraffic"
+$desiredValue = 0
+
+# Ensure the registry path exists
+if (-not (Test-Path $regPath)) {
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+# Set the value
+Set-ItemProperty -Path $regPath -Name $valueName -Value $desiredValue -Type DWord
+
+# Confirm the result
+Get-ItemProperty -Path $regPath -Name $valueName
