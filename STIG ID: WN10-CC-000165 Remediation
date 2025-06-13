@@ -1,0 +1,67 @@
+STIG ID: WN10-CC-000165
+Title: Unauthenticated RPC Clients Must Be Restricted from Connecting to the RPC Server
+
+Summary:
+Restricting unauthenticated (anonymous) RPC clients from connecting to the RPC server enhances system security by mitigating the risk of unauthorized access. Enforcing this setting ensures that only authenticated users are allowed to establish RPC connections, reducing potential exposure to security threats and vulnerabilities.
+
+Registry Assessment:
+    Registry Hive: HKEY_LOCAL_MACHINE
+    Registry Path: SOFTWARE\Policies\Microsoft\Windows NT\Rpc
+    Finding: The Rpc key was not present at the specified path.
+
+Manual Remediation:
+The configuration was manually enforced via Group Policy:
+
+    Path:
+    Computer Configuration >> Administrative Templates >> System >> Remote Procedure Call
+
+    Policy:
+    "Restrict Unauthenticated RPC clients"
+
+    Setting:
+    Set to "Enabled" with the option "Authenticated"
+
+A compliance scan confirmed the system passed after this change. The setting was then reverted to Not Configured and the remediation was applied via PowerShell for automation purposes.
+
+PowerShell Remediation Script:
+
+<#
+.SYNOPSIS
+  Restricts unauthenticated (anonymous) RPC clients from connecting to the RPC server.
+.DESCRIPTION
+  Implements STIG WN10‑CC‑000165 by setting RestrictRemoteClients = 1.
+  Registry Hive: HKEY_LOCAL_MACHINE
+  Registry Path: SOFTWARE\Policies\Microsoft\Windows NT\Rpc
+  Value Name: RestrictRemoteClients
+  Value Type: REG_DWORD
+  Value: 1
+.EXAMPLE
+  .\Restrict-UnauthenticatedRPC.ps1
+#>
+
+param (
+    [switch]$WhatIf
+)
+
+$regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Rpc"
+$valueName = "RestrictRemoteClients"
+$desiredValue = 1
+
+# Create the registry key if it does not exist
+if (-not (Test-Path $regPath)) {
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+# Apply the registry value
+if ($WhatIf) {
+    Write-Host "WhatIf: would set $valueName = $desiredValue at $regPath"
+} else {
+    Set-ItemProperty -Path $regPath -Name $valueName -Value $desiredValue -Type DWord
+    Write-Host "Set $valueName = $desiredValue at $regPath"
+}
+
+# Confirm the result
+Get-ItemProperty -Path $regPath -Name $valueName
+
+Verification:
+The registry value RestrictRemoteClients was successfully created and set to 1. A subsequent compliance scan validated that the system is now compliant with STIG ID WN10-CC-000165.
