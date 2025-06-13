@@ -1,0 +1,71 @@
+STIG ID: WN10-CC-000275
+Title: Local drives must be prevented from sharing with Remote Desktop Session Hosts.
+
+Summary:
+Restricting users from sharing their local drives with Remote Desktop Session Hosts helps mitigate the risk of data leakage, malware transmission, and unauthorized data exfiltration. This control enforces strict separation between local and remote environments, thereby supporting data protection, auditability, and compliance with organizational security policies.
+
+Assessment Details:
+
+    Registry Hive: HKEY_LOCAL_MACHINE
+
+    Registry Path: \SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services\
+
+    Observation: The registry value fDisableCdm was not present at the specified path.
+
+Manual Remediation (Initial):
+
+    Navigated to:
+    Administrative Templates >> Windows Components >> Remote Desktop Services >> Remote Desktop Session Host >> Device and Resource Redirection
+
+    Configured the policy “Do not allow drive redirection” to "Enabled"
+
+    Performed a compliance scan → Result: Passed
+
+    Reverted the setting to "Not Configured" in order to apply a persistent fix via script.
+
+Script-Based Remediation:
+
+The following PowerShell script was used to enforce the required setting:
+
+<#
+.SYNOPSIS
+  Disables drive redirection for Remote Desktop Session Hosts.
+.DESCRIPTION
+  Enforces STIG WN10‑CC‑000275 by setting fDisableCdm = 1.
+  Hive: HKEY_LOCAL_MACHINE
+  Path: SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services
+  ValueName: fDisableCdm
+  ValueType: REG_DWORD
+  Value: 1
+.EXAMPLE
+  .\Disable-RDPDriveRedirection.ps1
+#>
+
+param (
+    [switch]$WhatIf
+)
+
+$regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
+$valueName = "fDisableCdm"
+$desiredValue = 1
+
+# Create path if it doesn't exist
+if (-not (Test-Path $regPath)) {
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+# Apply the setting
+if ($WhatIf) {
+    Write-Host "WhatIf: would set $valueName = $desiredValue at $regPath"
+} else {
+    Set-ItemProperty -Path $regPath -Name $valueName -Value $desiredValue -Type DWord
+    Write-Host "Set $valueName = $desiredValue at $regPath"
+}
+
+# Verify result
+Get-ItemProperty -Path $regPath -Name $valueName
+
+Post-Remediation Verification:
+    Confirmed the registry key exists.
+    fDisableCdm is present and correctly set to 1 (REG_DWORD).
+    Subsequent compliance scan validated the remediation as successful.
