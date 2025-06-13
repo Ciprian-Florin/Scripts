@@ -1,0 +1,63 @@
+STIG ID: WN10-CC-000150
+Title: The user must be prompted for a password on resume from sleep (plugged in)
+
+Summary:
+Requiring authentication when resuming from sleep ensures that only authorized users can access the system after it wakes. Enabling this setting protects sensitive information by enforcing a password prompt when the device resumes from sleep while connected to a power source. This helps prevent unauthorized access in situations where the system is left unattended.
+
+Assessment Details:
+    Registry Hive: HKEY_LOCAL_MACHINE
+    Registry Path: SOFTWARE\Policies\Microsoft\Power\PowerSettings\0e796bdb-100d-47d6-a2d5-f7d2daa51f51
+    Observation: The specified registry path and corresponding values were not present.
+
+Manual Remediation (Initial):
+    Navigated to:
+    Administrative Templates >> System >> Power Management >> Sleep Settings
+    Configured the setting "Require a password when a computer wakes (plugged in)" to "Enabled"
+    Performed a compliance scan → Result: Passed
+    Reverted the setting to "Not Configured" in order to apply a scripted remediation for consistency and scalability.
+Script-Based Remediation:
+
+The following PowerShell script was used to enforce the required configuration:
+
+<#
+.SYNOPSIS
+  Ensures the system prompts for a password when resuming from sleep while plugged in.
+.DESCRIPTION
+  Enforces STIG WN10‑CC‑000150 by setting ACSettingIndex = 1
+  Hive: HKEY_LOCAL_MACHINE
+  Path: SOFTWARE\Policies\Microsoft\Power\PowerSettings\0e796bdb-100d-47d6-a2d5-f7d2daa51f51
+  ValueName: ACSettingIndex
+  ValueType: REG_DWORD
+  Value: 1
+.EXAMPLE
+  .\Enable-PasswordOnWakePluggedIn.ps1
+#>
+
+param (
+    [switch]$WhatIf
+)
+
+$regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Power\PowerSettings\0e796bdb-100d-47d6-a2d5-f7d2daa51f51"
+$valueName = "ACSettingIndex"
+$desiredValue = 1
+
+# Create the registry path if it doesn't exist
+if (-not (Test-Path $regPath)) {
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+# Apply the setting
+if ($WhatIf) {
+    Write-Host "WhatIf: would set $valueName = $desiredValue at $regPath"
+} else {
+    Set-ItemProperty -Path $regPath -Name $valueName -Value $desiredValue -Type DWord
+    Write-Host "Set $valueName = $desiredValue at $regPath"
+}
+
+# Verify the result
+Get-ItemProperty -Path $regPath -Name $valueName
+
+Post-Remediation Verification:
+    The registry key and value were successfully created and verified.
+    ACSettingIndex is set to 1 (REG_DWORD), enforcing the password prompt when the device resumes from sleep while plugged in.
+    A follow-up compliance scan confirmed the system is now compliant with STIG ID: WN10-CC-000150.
