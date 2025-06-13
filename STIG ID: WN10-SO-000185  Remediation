@@ -1,0 +1,30 @@
+Control ID: STIG ID: WN10-SO-000185
+Control Title: PKU2U Authentication Using Online Identities Must Be Prevented
+
+Control Description:
+Disabling PKU2U authentication prevents the use of online identities to authenticate to domain-joined systems. This ensures that only centrally managed Windows user accounts are permitted for authentication, thereby enhancing security and administrative control within the enterprise environment.
+
+Assessment Details:
+
+    Registry Hive: HKEY_LOCAL_MACHINE
+
+    Registry Path: \SYSTEM\CurrentControlSet\Control\LSA\pku2u
+
+    Observation:
+    The pku2u registry key was not present.
+
+    Remediation Action:
+    Manual enforcement was applied through the following Group Policy path:
+    Computer Configuration → Windows Settings → Security Settings → Local Policies → Security Options
+
+        Policy: "Network security: Allow PKU2U authentication requests to this computer to use online identities"
+
+        Configured Value: Disabled
+
+    Verification:
+    The virtual machine was rescanned following remediation.
+
+        Result: Passed
+
+
+
